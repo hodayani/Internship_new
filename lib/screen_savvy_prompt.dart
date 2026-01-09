@@ -22,7 +22,7 @@ You MUST:
 - Support Hebrew and English input.
 - Use JSON null (not the string "null") for missing values inside the chosen object.
 - NEVER invent OS, version, details, or new labels.
-- ENGLISH MUST be used for summary + steps_to_repro even if the email is Hebrew.
+- ENGLISH MUST be used for summary + steps_to_repro + what_happened + what_should_happen even if the email is Hebrew.
 - Detect and redact all PII (email, phone, ID) using "[REDACTED]".
 - meta.pii_redacted must always be true.
 - If confidence would be < 0.7, still classify but set confidence accordingly and set meta.needs_review = true.
@@ -209,8 +209,13 @@ PII PATTERNS:
 ===========================================================
 ATTACHMENT DETECTION
 ===========================================================
-- If email mentions "screenshot", "image", "photo", "picture", "video", "attached", "attachment" → set meta.has_attachments = true
-- Otherwise → meta.has_attachments = false
+If Subject/Body mentions: "screenshot", "image", "photo", "picture", "video", "attached", "attachment", "log"
+→ set meta.has_attachments = true
+→ meta.attachment_review_note MUST be a real sentence in English
+
+Otherwise:
+→ meta.has_attachments = false
+→ meta.attachment_review_note = null
 
 ===========================================================
 PRE-PROCESSING AWARENESS
@@ -231,6 +236,9 @@ Before returning JSON, verify:
    - bug.type MUST NOT be null
    - bug.severity MUST NOT be null
    - The "feedback" object MUST NOT be present in the JSON at all.
+   - what_happened MUST be English (or null).
+   - what_should_happen MUST be English (or null).
+   - Do NOT invent. If unclear, use null.
 2. If category="feedback":
    - feedback.topic MUST NOT be null
    - feedback.summary MUST NOT be null
@@ -239,6 +247,7 @@ Before returning JSON, verify:
 4. summary and steps_to_repro MUST be in English (not Hebrew)
 5. meta.pii_redacted MUST always be true
 6. If confidence < 0.7 → meta.needs_review MUST be true
+
 
 ===========================================================
 FINAL JSON SHAPE (MUST MATCH EXACTLY)
@@ -258,6 +267,8 @@ If category="bug":
     "type": "crash | performance | ui/ux | network | auth/login | payments | data_integrity | notification | localization | accessibility | device_compatibility | other | null",
     "component": "string | null",
     "severity": "low | medium | high | critical | null",
+    "what_happened": "string | null",
+    "what_should_happen": "string | null",
     "steps_to_repro": "string | null",
     "os": "Android | iOS | Web | null",
     "app_version": "string | null"
@@ -267,7 +278,8 @@ If category="bug":
     "pii_redacted": true,
     "detected_entities": [],
     "needs_review": false,
-    "has_attachments": false
+    "has_attachments": false,
+    "attachment_review_note": "string | null"
   }
 }
 
@@ -288,7 +300,8 @@ If category="feedback":
     "pii_redacted": true,
     "detected_entities": [],
     "needs_review": false,
-    "has_attachments": false
+    "has_attachments": false,
+    "attachment_review_note": "string | null"
   }
 }
 
@@ -305,6 +318,7 @@ EMAIL CONTENT:
 Subject: $subject
 From: $from
 Body: $safeBody
+
 
 Begin analysis now and return ONLY the JSON object.
 ''';
