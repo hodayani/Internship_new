@@ -1,0 +1,11 @@
+#Rust workspace settings
+[workspace]
+members = [
+    "programs/screensavvy-chain",
+    "programs/spend-router",
+    "programs/staking-vault"
+]
+resolver = "2"
+
+[profile.release]
+overflow-checks = true

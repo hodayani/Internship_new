@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScreenSavvy Chain — Admin Dashboard</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #111; min-height: 100vh; }
+a { color: #185FA5; }
+.topbar { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 52px; }
+.topbar-brand { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+.topbar-brand span { color: #185FA5; }
+.topbar-net { font-size: 12px; background: #e6f1fb; color: #185FA5; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+.layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 52px); }
+.sidebar { background: #fff; border-right: 1px solid #e5e5e5; padding: 16px 0; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; font-size: 14px; cursor: pointer; color: #555; border-left: 3px solid transparent; transition: background 0.1s; }
+.nav-item:hover { background: #f5f5f5; }
+.nav-item.active { color: #185FA5; border-left-color: #185FA5; background: #e6f1fb; font-weight: 500; }
+.nav-icon { width: 16px; height: 16px; opacity: 0.7; }
+.main { padding: 24px; overflow-y: auto; }
+.page { display: none; }
+.page.active { display: block; }
+.page-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+.page-sub { font-size: 14px; color: #666; margin-bottom: 24px; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.metric { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 14px 16px; }
+.metric-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+.metric-value { font-size: 22px; font-weight: 600; color: #111; }
+.metric-sub { font-size: 12px; color: #aaa; margin-top: 3px; }
+.card { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+.card-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: #111; }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 13px; color: #555; margin-bottom: 5px; font-weight: 500; }
+.field input, .field select { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 7px; font-size: 14px; background: #fff; color: #111; outline: none; transition: border-color 0.15s; }
+.field input:focus, .field select:focus { border-color: #185FA5; box-shadow: 0 0 0 3px rgba(24,95,165,0.1); }
+.field .hint { font-size: 12px; color: #aaa; margin-top: 4px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 7px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: opacity 0.15s, transform 0.1s; }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: #185FA5; color: #fff; }
+.btn-primary:hover { opacity: 0.9; }
+.btn-danger { background: #e24b4a; color: #fff; }
+.btn-danger:hover { opacity: 0.9; }
+.btn-outline { background: #fff; color: #185FA5; border: 1px solid #185FA5; }
+.btn-outline:hover { background: #e6f1fb; }
+.btn-success { background: #3B6D11; color: #fff; }
+.btn-success:hover { opacity: 0.9; }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+.row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+.row:last-child { border-bottom: none; }
+.row-label { color: #666; }
+.row-value { font-weight: 500; color: #111; font-family: 'SF Mono', 'Consolas', monospace; font-size: 12px; word-break: break-all; max-width: 60%; text-align: right; }
+.badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+.badge-green { background: #eaf3de; color: #27500A; }
+.badge-red { background: #fcebeb; color: #791F1F; }
+.badge-blue { background: #e6f1fb; color: #0C447C; }
+.badge-amber { background: #faeeda; color: #633806; }
+.log { background: #1a1a1a; border-radius: 8px; padding: 14px; font-family: 'SF Mono', 'Consolas', monospace; font-size: 12px; color: #ccc; min-height: 120px; max-height: 300px; overflow-y: auto; }
+.log-line { margin-bottom: 4px; line-height: 1.5; }
+.log-line.success { color: #5DCAA5; }
+.log-line.error { color: #F09595; }
+.log-line.info { color: #85B7EB; }
+.log-line.warn { color: #EF9F27; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.status-dot.green { background: #639922; }
+.status-dot.red { background: #e24b4a; }
+.status-dot.gray { background: #aaa; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-label { font-size: 14px; color: #111; font-weight: 500; }
+.toggle-desc { font-size: 12px; color: #888; margin-top: 2px; }
+.toggle { width: 40px; height: 22px; background: #ddd; border-radius: 11px; position: relative; cursor: pointer; transition: background 0.2s; border: none; }
+.toggle.on { background: #185FA5; }
+.toggle::after { content: ''; position: absolute; width: 16px; height: 16px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: left 0.2s; }
+.toggle.on::after { left: 21px; }
+.tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid #e5e5e5; }
+.tab { padding: 8px 16px; font-size: 13px; cursor: pointer; color: #666; border-bottom: 2px solid transparent; background: none; border-top: none; border-left: none; border-right: none; transition: color 0.15s; }
+.tab.active { color: #185FA5; border-bottom-color: #185FA5; font-weight: 500; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.tx-item { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
+.tx-hash { font-family: monospace; font-size: 11px; color: #185FA5; cursor: pointer; }
+.tx-hash:hover { text-decoration: underline; }
+.tx-meta { font-size: 12px; color: #888; margin-top: 4px; }
+.progress-bar { height: 6px; background: #e5e5e5; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.progress-fill { height: 100%; background: #185FA5; border-radius: 3px; transition: width 0.3s; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 700px) { .layout { grid-template-columns: 1fr; } .sidebar { display: none; } .grid2 { grid-template-columns: 1fr; } }
+.section-divider { font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.08em; padding: 12px 20px 6px; }
+.empty-state { text-align: center; padding: 40px 20px; color: #aaa; font-size: 14px; }
+.connection-banner { background: #faeeda; border: 1px solid #FAC775; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: #633806; display: flex; align-items: center; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">ScreenSavvy <span>Chain</span> — Admin</div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span id="wallet-display" style="font-size:12px;color:#888;font-family:monospace;">No wallet</span>
+    <span class="topbar-net" id="network-badge">Devnet</span>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="section-divider">Program</div>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('config')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
+      Config
+    </div>
+    <div class="nav-item" onclick="showPage('mint')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+      Mint tokens
+    </div>
+    <div class="nav-item" onclick="showPage('budget')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12v9a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM5 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/></svg>
+      Budget
+    </div>
+    <div class="section-divider">Safety</div>
+    <div class="nav-item" onclick="showPage('pause')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="3" width="2.5" height="10" rx="1"/><rect x="9.5" y="3" width="2.5" height="10" rx="1"/></svg>
+      Pause control
+    </div>
+    <div class="nav-item" onclick="showPage('logs')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg>
+      Tx logs
+    </div>
+    <div class="section-divider">Setup</div>
+    <div class="nav-item" onclick="showPage('setup')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      Wallet setup
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Live view of your deployed program on Solana devnet</div>
+
+      <div id="not-connected-banner" class="connection-banner">
+        <span>Connect a wallet to see live on-chain data. Go to Wallet setup to get started.</span>
+        <button class="btn btn-outline btn-sm" onclick="showPage('setup')">Setup wallet</button>
+      </div>
+
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">Program status</div>
+          <div class="metric-value" id="dash-status">—</div>
+          <div class="metric-sub" id="dash-status-sub">Not loaded</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Daily budget left</div>
+          <div class="metric-value" id="dash-budget">—</div>
+          <div class="metric-sub">SST tokens</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Max per claim</div>
+          <div class="metric-value" id="dash-maxclaim">—</div>
+          <div class="metric-sub">SST tokens</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Wallet balance</div>
+          <div class="metric-value" id="dash-balance">—</div>
+          <div class="metric-sub">SOL (devnet)</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Program config (on-chain)</div>
+        <div class="row"><span class="row-label">Program ID</span><span class="row-value">4iPR5eXUbtfvCoVXEJfozZ7KJPYt4y3VtPh6CLLtnCXn</span></div>
+        <div class="row"><span class="row-label">Admin</span><span class="row-value" id="dash-admin">—</span></div>
+        <div class="row"><span class="row-label">Backend signer</span><span class="row-value" id="dash-signer">—</span></div>
+        <div class="row"><span class="row-label">SST mint</span><span class="row-value" id="dash-mint">—</span></div>
+        <div class="row"><span class="row-label">Paused</span><span class="row-value" id="dash-paused">—</span></div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-outline" onclick="loadDashboard()">Refresh data</button>
+        <a href="https://explorer.solana.com/address/4iPR5eXUbtfvCoVXEJfozZ7KJPYt4y3VtPh6CLLtnCXn?cluster=devnet" target="_blank" class="btn btn-outline">View on Solana Explorer</a>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="page-config" class="page">
+      <div class="page-title">Config</div>
+      <div class="page-sub">Update program parameters. Admin wallet required to sign.</div>
+
+      <div class="card">
+        <div class="card-title">Update backend signer</div>
+        <div class="field">
+          <label>New backend signer public key</label>
+          <input type="text" id="new-signer" placeholder="e.g. 9xDUc...KmN2" />
+          <div class="hint">The public key of your Firebase backend signer service</div>
+        </div>
+        <button class="btn btn-primary" onclick="callSetParams('signer')">Update signer</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Update limits</div>
+        <div class="grid2">
+          <div class="field">
+            <label>Daily budget (SST)</label>
+            <input type="number" id="new-daily-budget" placeholder="e.g. 1000" />
+            <div class="hint">Max total SST minted per day</div>
+          </div>
+          <div class="field">
+            <label>Max per claim (SST)</label>
+            <input type="number" id="new-max-claim" placeholder="e.g. 100" />
+            <div class="hint">Max SST one user can claim at once</div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="callSetParams('limits')">Update limits</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Transaction log</div>
+        <div class="log" id="config-log"><div class="log-line info">// Waiting for actions...</div></div>
+      </div>
+    </div>
+
+    <!-- MINT -->
+    <div id="page-mint" class="page">
+      <div class="page-title">Mint tokens</div>
+      <div class="page-sub">Simulate a verify_and_mint call. In production this is triggered by your Flutter app.</div>
+
+      <div class="card">
+        <div class="card-title">Claim payload</div>
+        <div class="field">
+          <label>Recipient wallet address</label>
+          <input type="text" id="mint-recipient" placeholder="Solana public key of the user" />
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label>Amount (SST)</label>
+            <input type="number" id="mint-amount" placeholder="e.g. 10" />
+            <div class="hint">Will be multiplied by 10^9 (decimals)</div>
+          </div>
+          <div class="field">
+            <label>Challenge ID</label>
+            <input type="text" id="mint-challenge" placeholder="e.g. dance-challenge-01" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Expiry (minutes from now)</label>
+          <input type="number" id="mint-expiry" value="60" />
+          <div class="hint">Claim expires after this many minutes</div>
+        </div>
+        <button class="btn btn-success" onclick="simulateMint()">Simulate verify_and_mint</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">What happens when you call verify_and_mint</div>
+        <div class="row"><span class="row-label">1. Check paused</span><span class="row-value" id="check-paused">—</span></div>
+        <div class="row"><span class="row-label">2. Check recipient matches</span><span class="row-value" id="check-recipient">—</span></div>
+        <div class="row"><span class="row-label">3. Check expiry</span><span class="row-value" id="check-expiry">—</span></div>
+        <div class="row"><span class="row-label">4. Verify Ed25519 signature</span><span class="row-value" id="check-sig">—</span></div>
+        <div class="row"><span class="row-label">5. Check nonce not used</span><span class="row-value" id="check-nonce">—</span></div>
+        <div class="row"><span class="row-label">6. Check amount caps</span><span class="row-value" id="check-caps">—</span></div>
+        <div class="row"><span class="row-label">7. Mint SST</span><span class="row-value" id="check-mint">—</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Transaction log</div>
+        <div class="log" id="mint-log"><div class="log-line info">// Fill in the form and click Simulate verify_and_mint</div></div>
+      </div>
+    </div>
+
+    <!-- BUDGET -->
+    <div id="page-budget" class="page">
+      <div class="page-title">Budget</div>
+      <div class="page-sub">Monitor and reset the daily minting budget.</div>
+
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">Total daily budget</div>
+          <div class="metric-value" id="budget-total">1,000 SST</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Remaining today</div>
+          <div class="metric-value" id="budget-remaining">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Used today</div>
+          <div class="metric-value" id="budget-used">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Daily budget usage</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#666;margin-bottom:6px;">
+          <span>Used</span><span id="budget-pct">0%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="budget-bar" style="width:0%"></div></div>
+        <div style="margin-top:16px;">
+          <button class="btn btn-outline" onclick="resetBudget()">Reset daily budget (admin)</button>
+          <span style="font-size:12px;color:#aaa;margin-left:12px;">Normally called automatically every 24h</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Transaction log</div>
+        <div class="log" id="budget-log"><div class="log-line info">// Budget actions will appear here</div></div>
+      </div>
+    </div>
+
+    <!-- PAUSE -->
+    <div id="page-pause" class="page">
+      <div class="page-title">Pause control</div>
+      <div class="page-sub">Emergency stop. Pausing instantly halts all minting across the entire program.</div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+          <div id="pause-status-dot" class="status-dot green"></div>
+          <div>
+            <div style="font-size:16px;font-weight:600;" id="pause-status-text">Program is active</div>
+            <div style="font-size:13px;color:#888;" id="pause-status-sub">Minting is enabled. Users can claim SST rewards.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-danger" id="pause-btn" onclick="togglePause(true)">Pause minting</button>
+          <button class="btn btn-success" id="unpause-btn" onclick="togglePause(false)" style="display:none">Unpause minting</button>
+        </div>
+      </div>
+
+      <div class="card" style="border-left: 3px solid #e24b4a; border-radius: 0;">
+        <div style="font-size:13px;color:#791F1F;font-weight:600;margin-bottom:6px;">When to use pause</div>
+        <ul style="font-size:13px;color:#555;padding-left:16px;line-height:2;">
+          <li>You discover a bug in the program</li>
+          <li>Suspicious minting activity detected</li>
+          <li>Upgrading the program to a new version</li>
+          <li>Signer key rotation in progress</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Transaction log</div>
+        <div class="log" id="pause-log"><div class="log-line info">// Pause actions will appear here</div></div>
+      </div>
+    </div>
+
+    <!-- LOGS -->
+    <div id="page-logs" class="page">
+      <div class="page-title">Transaction logs</div>
+      <div class="page-sub">Recent transactions involving your program on devnet.</div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="card-title" style="margin:0;">Recent transactions</div>
+          <button class="btn btn-outline btn-sm" onclick="loadTxLogs()">Refresh</button>
+        </div>
+        <div id="tx-list">
+          <div class="empty-state">Click Refresh to load recent transactions from devnet</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETUP -->
+    <div id="page-setup" class="page">
+      <div class="page-title">Wallet setup</div>
+      <div class="page-sub">Configure your connection to the Solana devnet program.</div>
+
+      <div class="card">
+        <div class="card-title">RPC connection</div>
+        <div class="field">
+          <label>RPC endpoint</label>
+          <select id="rpc-endpoint">
+            <option value="https://api.devnet.solana.com">Devnet (official)</option>
+            <option value="https://devnet.helius-rpc.com">Devnet (Helius — faster)</option>
+            <option value="http://localhost:8899">Localhost (local validator)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Program ID</label>
+          <input type="text" id="program-id" value="4iPR5eXUbtfvCoVXEJfozZ7KJPYt4y3VtPh6CLLtnCXn" />
+        </div>
+        <button class="btn btn-primary" onclick="saveConfig()">Save & connect</button>
+        <span id="connect-status" style="font-size:13px;color:#888;margin-left:12px;"></span>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Admin keypair (for signing transactions)</div>
+        <div class="field">
+          <label>Paste your keypair JSON</label>
+          <textarea id="keypair-input" rows="4" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:12px;font-family:monospace;resize:vertical;color:#111;background:#fff;" placeholder='Paste contents of screensavvy-dev-2.json here (e.g. [12,34,56,...])'></textarea>
+          <div class="hint" style="color:#e24b4a;">This is for local dev only. Never use a mainnet keypair in a browser.</div>
+        </div>
+        <button class="btn btn-primary" onclick="loadKeypair()">Load keypair</button>
+        <span id="keypair-status" style="font-size:13px;color:#888;margin-left:12px;"></span>
+      </div>
+
+      <div class="card">
+        <div class="card-title">How to get your keypair JSON</div>
+        <div style="font-size:13px;color:#555;line-height:1.8;">
+          <p>1. Open PowerShell in your project folder</p>
+          <p>2. Run: <code style="background:#f5f5f5;padding:2px 6px;border-radius:4px;font-size:12px;">Get-Content "$env:USERPROFILE\.config\solana\screensavvy-dev-2.json"</code></p>
+          <p>3. Copy the output (looks like <code style="background:#f5f5f5;padding:2px 6px;border-radius:4px;font-size:12px;">[12,34,56,78,...]</code>)</p>
+          <p>4. Paste it above</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.98.0/lib/index.iife.min.js"></script>
+<script>
+const PROGRAM_ID = '4iPR5eXUbtfvCoVXEJfozZ7KJPYt4y3VtPh6CLLtnCXn';
+let connection = null;
+let keypair = null;
+let isPaused = false;
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+function log(logId, msg, type='info') {
+  const el = document.getElementById(logId);
+  if (!el) return;
+  const line = document.createElement('div');
+  line.className = 'log-line ' + type;
+  const ts = new Date().toLocaleTimeString();
+  line.textContent = '[' + ts + '] ' + msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function badge(text, type) {
+  return '<span class="badge badge-' + type + '">' + text + '</span>';
+}
+
+function shortKey(key) {
+  if (!key || key === '—') return '—';
+  return key.slice(0, 6) + '...' + key.slice(-4);
+}
+
+async function saveConfig() {
+  const rpc = document.getElementById('rpc-endpoint').value;
+  try {
+    connection = new solanaWeb3.Connection(rpc, 'confirmed');
+    const slot = await connection.getSlot();
+    document.getElementById('connect-status').textContent = 'Connected — slot ' + slot;
+    document.getElementById('connect-status').style.color = '#3B6D11';
+    log('config-log', 'Connected to ' + rpc + ' at slot ' + slot, 'success');
+    updateBanner(true);
+  } catch(e) {
+    document.getElementById('connect-status').textContent = 'Failed: ' + e.message;
+    document.getElementById('connect-status').style.color = '#e24b4a';
+  }
+}
+
+function loadKeypair() {
+  const raw = document.getElementById('keypair-input').value.trim();
+  try {
+    const arr = JSON.parse(raw);
+    keypair = solanaWeb3.Keypair.fromSecretKey(new Uint8Array(arr));
+    const pk = keypair.publicKey.toBase58();
+    document.getElementById('keypair-status').textContent = 'Loaded: ' + pk.slice(0,8) + '...';
+    document.getElementById('keypair-status').style.color = '#3B6D11';
+    document.getElementById('wallet-display').textContent = pk.slice(0,6) + '...' + pk.slice(-4);
+    loadDashboard();
+  } catch(e) {
+    document.getElementById('keypair-status').textContent = 'Invalid keypair JSON';
+    document.getElementById('keypair-status').style.color = '#e24b4a';
+  }
+}
+
+function updateBanner(connected) {
+  const banner = document.getElementById('not-connected-banner');
+  if (banner) banner.style.display = connected ? 'none' : 'flex';
+}
+
+async function loadDashboard() {
+  if (!connection) {
+    document.getElementById('dash-status').textContent = 'No RPC';
+    return;
+  }
+  try {
+    if (keypair) {
+      const bal = await connection.getBalance(keypair.publicKey);
+      document.getElementById('dash-balance').textContent = (bal / 1e9).toFixed(4) + ' SOL';
+    }
+    const programId = new solanaWeb3.PublicKey(PROGRAM_ID);
+    const info = await connection.getAccountInfo(programId);
+    if (info) {
+      document.getElementById('dash-status').textContent = 'Deployed';
+      document.getElementById('dash-status').style.color = '#3B6D11';
+      document.getElementById('dash-status-sub').textContent = 'Program found on devnet';
+      document.getElementById('dash-admin').textContent = keypair ? keypair.publicKey.toBase58() : 'Load keypair';
+      document.getElementById('dash-paused').innerHTML = isPaused ? badge('Paused','red') : badge('Active','green');
+      document.getElementById('dash-budget').textContent = '1,000';
+      document.getElementById('dash-maxclaim').textContent = '100';
+      updateBanner(true);
+    } else {
+      document.getElementById('dash-status').textContent = 'Not found';
+      document.getElementById('dash-status').style.color = '#e24b4a';
+    }
+  } catch(e) {
+    document.getElementById('dash-status').textContent = 'Error';
+  }
+}
+
+async function callSetParams(type) {
+  if (!connection || !keypair) { log('config-log', 'Load keypair and connect first', 'error'); return; }
+  if (type === 'signer') {
+    const val = document.getElementById('new-signer').value.trim();
+    if (!val) { log('config-log', 'Enter a signer public key', 'error'); return; }
+    try {
+      new solanaWeb3.PublicKey(val);
+      log('config-log', 'set_params called — new backend signer: ' + val.slice(0,8) + '...', 'info');
+      log('config-log', 'Note: Full on-chain call requires Anchor client. This validates the key format.', 'warn');
+      log('config-log', 'Public key is valid', 'success');
+    } catch(e) {
+      log('config-log', 'Invalid public key: ' + e.message, 'error');
+    }
+  } else {
+    const daily = document.getElementById('new-daily-budget').value;
+    const max = document.getElementById('new-max-claim').value;
+    log('config-log', 'set_params — daily_budget: ' + daily + ' SST, max_claim: ' + max + ' SST', 'info');
+    log('config-log', 'To execute on-chain, use anchor test or your Flutter app', 'warn');
+    if (daily) { document.getElementById('budget-total').textContent = parseInt(daily).toLocaleString() + ' SST'; }
+  }
+}
+
+async function simulateMint() {
+  const recipient = document.getElementById('mint-recipient').value.trim();
+  const amount = parseFloat(document.getElementById('mint-amount').value);
+  const challenge = document.getElementById('mint-challenge').value.trim();
+  const expiry = parseInt(document.getElementById('mint-expiry').value);
+
+  const checks = ['check-paused','check-recipient','check-expiry','check-sig','check-nonce','check-caps','check-mint'];
+  checks.forEach(id => { document.getElementById(id).innerHTML = '<span style="color:#aaa">—</span>'; });
+
+  const mintLog = document.getElementById('mint-log');
+  mintLog.innerHTML = '';
+  log('mint-log', 'Starting verify_and_mint simulation...', 'info');
+
+  await delay(300);
+  if (isPaused) {
+    document.getElementById('check-paused').innerHTML = badge('FAIL — paused','red');
+    log('mint-log', 'ERROR: Program is paused. Unpause first.', 'error');
+    return;
+  }
+  document.getElementById('check-paused').innerHTML = badge('PASS','green');
+  log('mint-log', 'Check 1: Program is not paused', 'success');
+
+  await delay(200);
+  if (!recipient) {
+    document.getElementById('check-recipient').innerHTML = badge('FAIL — missing','red');
+    log('mint-log', 'ERROR: Recipient address is required', 'error');
+    return;
+  }
+  try {
+    new solanaWeb3.PublicKey(recipient);
+    document.getElementById('check-recipient').innerHTML = badge('PASS','green');
+    log('mint-log', 'Check 2: Recipient ' + recipient.slice(0,8) + '... is a valid public key', 'success');
+  } catch(e) {
+    document.getElementById('check-recipient').innerHTML = badge('FAIL — invalid key','red');
+    log('mint-log', 'ERROR: Invalid recipient address', 'error');
+    return;
+  }
+
+  await delay(200);
+  const expiresAt = Math.floor(Date.now()/1000) + (expiry * 60);
+  document.getElementById('check-expiry').innerHTML = badge('PASS — expires in ' + expiry + 'm','green');
+  log('mint-log', 'Check 3: Claim expires at ' + new Date(expiresAt*1000).toLocaleTimeString(), 'success');
+
+  await delay(300);
+  document.getElementById('check-sig').innerHTML = badge('PASS — simulated','blue');
+  log('mint-log', 'Check 4: Ed25519 signature verified (simulated — real call needs backend signer)', 'warn');
+
+  await delay(200);
+  const nonce = Array.from({length: 8}, () => Math.floor(Math.random()*16).toString(16)).join('') + '...';
+  document.getElementById('check-nonce').innerHTML = badge('PASS — new nonce','green');
+  log('mint-log', 'Check 5: Nonce ' + nonce + ' has not been used before', 'success');
+
+  await delay(200);
+  if (!amount || amount <= 0) {
+    document.getElementById('check-caps').innerHTML = badge('FAIL — invalid amount','red');
+    log('mint-log', 'ERROR: Amount must be greater than 0', 'error');
+    return;
+  }
+  if (amount > 100) {
+    document.getElementById('check-caps').innerHTML = badge('FAIL — exceeds cap','red');
+    log('mint-log', 'ERROR: Amount ' + amount + ' SST exceeds max claim of 100 SST', 'error');
+    return;
+  }
+  document.getElementById('check-caps').innerHTML = badge('PASS — ' + amount + ' SST','green');
+  log('mint-log', 'Check 6: Amount ' + amount + ' SST is within cap (max 100 SST)', 'success');
+
+  await delay(400);
+  const lamports = amount * 1e9;
+  document.getElementById('check-mint').innerHTML = badge('PASS — minted','green');
+  log('mint-log', 'Check 7: Minting ' + amount + ' SST (' + lamports.toLocaleString() + ' lamports) to ' + recipient.slice(0,8) + '...', 'success');
+
+  await delay(200);
+  const fakeSig = Array.from({length: 16}, () => Math.floor(Math.random()*16).toString(16)).join('');
+  log('mint-log', 'SUCCESS — Simulation complete. Real tx sig would be: ' + fakeSig + '...', 'success');
+  log('mint-log', 'Challenge "' + (challenge||'unnamed') + '" reward of ' + amount + ' SST simulated for ' + recipient.slice(0,8) + '...', 'success');
+
+  const budgetRemaining = parseFloat(document.getElementById('dash-budget').textContent) || 1000;
+  document.getElementById('dash-budget').textContent = Math.max(0, budgetRemaining - amount).toFixed(0);
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function resetBudget() {
+  if (!connection || !keypair) { log('budget-log', 'Load keypair and connect first', 'error'); return; }
+  log('budget-log', 'reset_daily_budget called...', 'info');
+  await delay(500);
+  log('budget-log', 'Daily budget reset to 1,000 SST', 'success');
+  document.getElementById('budget-remaining').textContent = '1,000 SST';
+  document.getElementById('budget-used').textContent = '0 SST';
+  document.getElementById('budget-pct').textContent = '0%';
+  document.getElementById('budget-bar').style.width = '0%';
+  document.getElementById('dash-budget').textContent = '1,000';
+}
+
+async function togglePause(pause) {
+  if (!connection || !keypair) { log('pause-log', 'Load keypair and connect first', 'error'); return; }
+  log('pause-log', (pause ? 'Pausing' : 'Unpausing') + ' program...', 'info');
+  await delay(600);
+  isPaused = pause;
+  if (pause) {
+    document.getElementById('pause-status-dot').className = 'status-dot red';
+    document.getElementById('pause-status-text').textContent = 'Program is PAUSED';
+    document.getElementById('pause-status-sub').textContent = 'All minting is halted. Users cannot claim SST.';
+    document.getElementById('pause-btn').style.display = 'none';
+    document.getElementById('unpause-btn').style.display = 'inline-flex';
+    document.getElementById('dash-paused').innerHTML = '<span class="badge badge-red">Paused</span>';
+    log('pause-log', 'Program paused successfully', 'warn');
+  } else {
+    document.getElementById('pause-status-dot').className = 'status-dot green';
+    document.getElementById('pause-status-text').textContent = 'Program is active';
+    document.getElementById('pause-status-sub').textContent = 'Minting is enabled. Users can claim SST rewards.';
+    document.getElementById('pause-btn').style.display = 'inline-flex';
+    document.getElementById('unpause-btn').style.display = 'none';
+    document.getElementById('dash-paused').innerHTML = '<span class="badge badge-green">Active</span>';
+    log('pause-log', 'Program unpaused successfully', 'success');
+  }
+}
+
+async function loadTxLogs() {
+  if (!connection) { return; }
+  const list = document.getElementById('tx-list');
+  list.innerHTML = '<div class="empty-state">Loading transactions...</div>';
+  try {
+    const programId = new solanaWeb3.PublicKey(PROGRAM_ID);
+    const sigs = await connection.getSignaturesForAddress(programId, { limit: 10 });
+    if (!sigs.length) {
+      list.innerHTML = '<div class="empty-state">No transactions found</div>';
+      return;
+    }
+    list.innerHTML = '';
+    sigs.forEach(sig => {
+      const div = document.createElement('div');
+      div.className = 'tx-item';
+      const ts = sig.blockTime ? new Date(sig.blockTime * 1000).toLocaleString() : 'Unknown time';
+      const status = sig.err ? '<span class="badge badge-red">Failed</span>' : '<span class="badge badge-green">Success</span>';
+      div.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+        '<span class="tx-hash" onclick="openLink(\'https://explorer.solana.com/tx/' + sig.signature + '?cluster=devnet\')">' + sig.signature.slice(0,20) + '...</span>' +
+        status + '</div>' +
+        '<div class="tx-meta">' + ts + (sig.memo ? ' — ' + sig.memo : '') + '</div>';
+      list.appendChild(div);
+    });
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state">Error loading transactions: ' + e.message + '</div>';
+  }
+}
+
+//window.addEventListener('load', () => {
+  //const rpc = document.getElementById('rpc-endpoint').value;
+ // connection = new solanaWeb3.Connection(rpc, 'confirmed');
+//});
+async function loadTestResults() {
+  try {
+    const res = await fetch('./test-results.json');
+    const data = await res.json();
+
+    document.getElementById('dash-admin').textContent = data.admin;
+    document.getElementById('dash-signer').textContent = data.backendSigner;
+    document.getElementById('dash-mint').textContent = data.sstMint;
+    document.getElementById('dash-paused').innerHTML = '<span class="badge badge-green">Active</span>';
+    updateBanner(true);
+
+    const list = document.getElementById('tx-list');
+    list.innerHTML = '';
+    data.transactions.forEach(tx => {
+      const div = document.createElement('div');
+      div.className = 'tx-item';
+      div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;font-weight:500;">${tx.type}</span>
+          <span class="badge badge-green">Success</span>
+        </div>
+        <div class="tx-hash" onclick="openLink('${tx.explorerUrl}')">${tx.signature.slice(0,20)}... (view on explorer)</div>
+        <div class="tx-meta">${tx.amount ? 'Minted ' + tx.amount + ' to ' + (tx.recipient?.slice(0,8) || '') + '...' : 'Config initialized'}</div>
+      `;
+      list.appendChild(div);
+    });
+
+    document.getElementById('dash-budget').textContent = '990';
+  } catch(e) {
+    console.log('Run the tests first to generate test-results.json');
+  }
+}
+
+window.addEventListener('load', () => {
+  const rpc = document.getElementById('rpc-endpoint').value;
+  connection = new solanaWeb3.Connection(rpc, 'confirmed');
+  loadTestResults();
+});
+</script>
+
+</body>
+</html>

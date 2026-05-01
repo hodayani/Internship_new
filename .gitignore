@@ -1,0 +1,21 @@
+# Node
+node_modules/
+yarn.lock
+
+# Anchor / Solana
+target/
+dist/
+.cache/
+
+# Wallets & secrets
+*.json
+!tsconfig.json
+!package.json
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
