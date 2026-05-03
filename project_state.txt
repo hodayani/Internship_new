@@ -2,34 +2,25 @@ Rust = the language
 Solana = the blockchain platform
 Anchor = a framework that makes Solana programs easier to write
 
-Wallet Address: CVwHBGCBWruQdmJTnCQHrechjM7r7XspX2tR4Jh5G4pG
-Keypair Path:  C:\Users\XPRISTO\.config\solana\screensavvy-dev-2.json
 Network: devnet
-SOL Balance: 6.48668904 SOL
 
+Wallet Address:
+CVwHBGCBWruQdmJTnCQHrechjM7r7XspX2tR4Jh5G4pG
 
-SST Mint Address: 6RRCQRoYCbfeMMz6yFcwuTuPNbYqWkXLwJAGPfPAnxvq
-Decimals: 9
-Token Balance: 100
+SST Mint Address:
+6RRCQRoYCbfeMMz6yFcwuTuPNbYqWkXLwJAGPfPAnxvq
 
+Decimals:
+9
 
-Project Path: cd "$env:USERPROFILE\Desktop\screensavvy-chain"
-Program ID: 4iPR5eXUbtfvCoVXEJfozZ7KJPYt4y3VtPh6CLLtnCXn
- 
-build commands:
-cd "$env:USERPROFILE\Desktop\screensavvy-chain"
-$env:HOME = $env:USERPROFILE
-$env:PATH = "C:\Users\XPRISTO\Desktop\installations\solana-release-x86_64-pc-windows-msvc\solana-release\bin;$env:PATH"
-& "$env:USERPROFILE\.avm\bin\anchor-0.31.1.exe" build
+Program ID:
+4iPR5eXUbtfvCoVXEJfozZ7KJPYt4y3VtPh6CLLtnCXn
 
-Every time you open a new PowerShell terminal and want to work on this project, run these commands:
-cd "C:\Users\XPRISTO\Desktop\screensavvy-chain"
-$env:ANCHOR_PROVIDER_URL = "https://api.devnet.solana.com"
-$env:ANCHOR_WALLET = "$env:USERPROFILE\.config\solana\screensavvy-dev-2.json"
-
-Then to build and deploy:
+Build:
 anchor build
+
+Deploy:
 anchor deploy
 
-To run tests:
+Test:
 yarn run ts-mocha -p ./tsconfig.json -t 1000000 "tests/**/*.ts"
