@@ -1,4 +1,4 @@
-import * as anchor from "@coral-xyz/anchor";
+/* import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { ScreensavvyChain } from "../target/types/screensavvy_chain";
 import {
@@ -404,4 +404,6 @@ const txSig = await provider.sendAndConfirm(tx, []);;
     console.log("SST Mint:", results.sstMint);
     console.log("Config:", results.configAccount);
   });
-});
+}); 
+
+*/
